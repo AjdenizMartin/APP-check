@@ -1,126 +1,126 @@
-# App+ (MVP interno casino)
+# App+ (Casino Reception Operations)
 
-MVP serio para operacion de recepcion en casino pequeno: check-in/check-out, clientes, fotos privadas, historial y auditoria.
+MVP application for small casino reception operations: customer check-in/check-out, customer management, private photos, daily history, and audit trails.
 
-## Estado por fases
+## Milestones
 
-### FASE 0 - Validacion tecnica previa
-- Stack fijado: Next.js 15 + TypeScript + Tailwind + Auth.js + Prisma + PostgreSQL.
-- Decisiones tecnicas en `docs/technical-decisions.md`.
-- Riesgos claves resueltos:
-  - una sola visita activa por cliente via indice unico parcial en PostgreSQL.
-  - imagenes privadas via endpoint backend autorizado (no URL publica permanente).
+### Phase 0 - Technical Validation
+- Stack finalized: Next.js 15 + TypeScript + Tailwind CSS + Auth.js + Prisma + PostgreSQL.
+- Technical decisions documented in `docs/technical-decisions.md`.
+- Key risks resolved:
+  - One active visit per customer via unique partial index in PostgreSQL.
+  - Private images via authorized backend endpoint (no permanent public URLs).
 
-### FASE 1 - Scaffold base
-- Estructura modular creada:
+### Phase 1 - Base Scaffold
+- Modular structure created:
   - `src/app/(auth)`, `src/app/(dashboard)`, `src/app/api`
   - `src/modules/*`, `src/lib/*`, `src/components/*`, `src/tests/*`
-- UI operativa base para recepcion.
+- Base operational UI for reception.
 
-### FASE 2 - Base de datos y dominio
-- Prisma schema completo en `prisma/schema.prisma`.
-- Migracion inicial SQL en `prisma/migrations/0001_init/migration.sql`.
-- Seed inicial en `prisma/seed.ts`.
+### Phase 2 - Database & Domain
+- Complete Prisma schema in `prisma/schema.prisma`.
+- Initial migration SQL in `prisma/migrations/0001_init/migration.sql`.
+- Initial seed data in `prisma/seed.ts`.
 
-### FASE 3 - Auth y autorizacion
-- Auth.js con credenciales y roles (`ADMIN`, `SUPERVISOR`, `EMPLOYEE`) en `src/auth.ts`.
-- Rutas protegidas por middleware y autorizacion backend por endpoint.
+### Phase 3 - Auth & Authorization
+- Auth.js with credentials provider and roles (`ADMIN`, `SUPERVISOR`, `EMPLOYEE`) in `src/auth.ts`.
+- Protected routes via middleware and per-endpoint backend authorization.
 
-### FASE 4 - Modulo clientes
-- CRUD base de clientes:
+### Phase 4 - Customer Module
+- Base customer CRUD:
   - `GET/POST /api/customers`
   - `GET/PATCH /api/customers/[customerId]`
-- Busqueda rapida por nombre/telefono/codigo.
-- Panel lateral (ficha flotante) con datos, fotos e historial reciente.
-- Subida y reemplazo de foto ID/rostro:
-  - `POST /api/customer-assets/upload`
-  - `GET /api/customer-assets/[assetId]/view`
+  - Quick search by name/phone/code.
+  - Floating side panel with profile, photos, and recent history.
+  - ID/Face photo upload and replacement:
+    - `POST /api/customer-assets/upload`
+    - `GET /api/customer-assets/[assetId]/view`
 
-### FASE 5 - Modulo visitas
+### Phase 5 - Visits Module
 - Check-in: `POST /api/visits`
-- Check-out + financiero transaccional: `POST /api/visits/checkout`
-- Historial diario operativo con filtros.
-- Correccion financiera con motivo (Supervisor/Admin): `POST /api/visits/financials/correct`
+- Check-out + transactional financial record: `POST /api/visits/checkout`
+- Operational daily history with filters.
+- Financial correction with reason (Supervisor/Admin): `POST /api/visits/financials/correct`
 
-### FASE 6 - Auditoria y acciones sensibles
-- Auditoria en acciones sensibles:
-  - create/update de cliente
-  - upload/reemplazo de asset
-  - check-in/check-out
-  - correccion financiera
-  - force checkout global
-  - cambios administrativos de usuarios
-- Vista auditoria por rol:
-  - ADMIN: completa
-  - SUPERVISOR: parcial
-  - ruta: `/dashboard/audit`
-- Force checkout global (Supervisor/Admin): `POST /api/visits/force-checkout-all`
+### Phase 6 - Audit & Sensitive Actions
+- Audit logging for sensitive actions:
+  - Customer create/update
+  - Asset upload/replace
+  - Check-in/check-out
+  - Financial correction
+  - Global force checkout
+  - Administrative user changes
+- Role-based audit view:
+  - ADMIN: full access
+  - SUPERVISOR: partial access
+  - Route: `/dashboard/audit`
+- Global force checkout (Supervisor/Admin): `POST /api/visits/force-checkout-all`
 
-### FASE 7 - Calidad minima
-- Typecheck, lint, unit tests y build verificados.
-- Playwright smoke test base incluido.
+### Phase 7 - Minimum Quality
+- Typecheck, lint, unit tests, and build verified.
+- Playwright smoke test included.
 
-## Funcionalidades administrativas
-- Gestion de usuarios y roles (ADMIN): `/dashboard/admin/users`
-- API de usuarios:
+## Admin Features
+- User and role management (ADMIN): `/dashboard/admin/users`
+- User APIs:
   - `GET/POST /api/users`
   - `PATCH /api/users/[userId]`
 
 ## Stack
 - Frontend: Next.js 15, React, TypeScript strict
-- UI: Tailwind CSS + componentes base estilo shadcn en `src/components/ui`
+- UI: Tailwind CSS + shadcn-style base components in `src/components/ui`
 - Forms: React Hook Form + Zod
 - Backend: App Router + Route Handlers
 - ORM: Prisma
 - DB: PostgreSQL
 - Auth: Auth.js (credentials)
-- Storage: abstraccion S3-compatible + fallback local privado
-- Observabilidad: estructura Sentry + logger
-- Testing: Vitest + Playwright smoke
+- Storage: S3-compatible abstraction + private local fallback
+- Observability: Sentry structure + custom logger
+- Testing: Vitest + Playwright smoke tests
 
-## Requisitos
+## Requirements
 - Node.js 22+
 - npm 10+
 - PostgreSQL 15+
 
-## Arranque local rapido
+## Quick Local Start
 
-1. Copiar variables:
-```bash
-cp .env.example .env
-```
+1. Copy environment variables:
+   ```bash
+   cp .env.example .env
+   ```
 
-2. Levantar Postgres (opcional con Docker):
-```bash
-docker compose up -d
-```
+2. Start PostgreSQL (optional with Docker):
+   ```bash
+   docker compose up -d
+   ```
 
-3. Generar Prisma client:
-```bash
-npm run db:generate
-```
+3. Generate Prisma client:
+   ```bash
+   npm run db:generate
+   ```
 
-4. Aplicar migraciones:
-```bash
-npm run db:migrate
-```
+4. Apply migrations:
+   ```bash
+   npm run db:migrate
+   ```
 
-5. Seed:
-```bash
-npm run db:seed
-```
+5. Seed the database:
+   ```bash
+   npm run db:seed
+   ```
 
-6. Ejecutar app:
-```bash
-npm run dev
-```
+6. Run the app:
+   ```bash
+   npm run dev
+   ```
 
-## Credenciales seed
+## Seed Credentials
 - admin@appplus.local / `SEED_DEFAULT_PASSWORD` (default: `Change123!`)
 - supervisor@appplus.local / `SEED_DEFAULT_PASSWORD`
 - employee@appplus.local / `SEED_DEFAULT_PASSWORD`
 
-## Scripts utiles
+## Useful Scripts
 - `npm run dev`
 - `npm run build`
 - `npm run typecheck`
@@ -131,10 +131,10 @@ npm run dev
 - `npm run db:migrate`
 - `npm run db:seed`
 
-## Pruebas implementadas (minimo solicitado)
-- no permitir doble visita activa
-- check-out correcto con financiero
-- force checkout cierra visitas activas
-- permisos por rol
-- correccion financiera requiere rol adecuado
-- acceso a datos sensibles restringido
+## Implemented Tests (Minimum Required)
+- No duplicate active visits allowed
+- Check-out correctly records financial data
+- Force checkout closes all active visits
+- Permissions enforced by role
+- Financial correction requires appropriate role
+- Access to sensitive data restricted
