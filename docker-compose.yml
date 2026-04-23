@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: appplus-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: appplus
+    ports:
+      - "5432:5432"
+    volumes:
+      - appplus_pgdata:/var/lib/postgresql/data
+
+volumes:
+  appplus_pgdata:

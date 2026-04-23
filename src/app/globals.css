@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --background: #07120f;
+  --foreground: #efe4cf;
+  --surface: #0f201b;
+  --surface-elevated: #122922;
+  --surface-muted: #0b1815;
+  --brand: #2f5b4d;
+  --brand-strong: #204136;
+  --accent: #b58a52;
+  --accent-strong: #d2a15e;
+  --line: #355145;
+  --text-muted: #baa788;
+  --danger: #d16057;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Avenir Next", "Gill Sans", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  color: var(--foreground);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(181, 138, 82, 0.15) 0%, transparent 35%),
+    radial-gradient(circle at 82% 6%, rgba(11, 65, 49, 0.36) 0%, transparent 38%),
+    linear-gradient(180deg, #0a1814 0%, #07120f 100%);
+}
+
+table {
+  border-collapse: collapse;
+}
+
+input[type="file"]::file-selector-button {
+  border: 1px solid var(--line);
+  background: #152a23;
+  color: var(--foreground);
+  border-radius: 8px;
+  padding: 0.35rem 0.65rem;
+  margin-right: 0.75rem;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: #1d382f;
+}
