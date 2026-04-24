@@ -83,6 +83,10 @@ export async function getCustomerDetail(customerId: string) {
   });
 }
 
+export async function getCustomersCount() {
+  return prisma.customer.count();
+}
+
 export async function createCustomer(rawInput: unknown, actorUserId: string) {
   const parsed = createCustomerSchema.parse(rawInput);
 

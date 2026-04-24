@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -36,6 +37,7 @@ export function CustomerEditForm({
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -48,6 +50,18 @@ export function CustomerEditForm({
       reason: "",
     },
   });
+
+  // Fix: Reset form when customer changes to prevent stale data
+  useEffect(() => {
+    reset({
+      fullName: customer.fullName,
+      phone: customer.phone,
+      address: customer.address,
+      notes: customer.notes ?? "",
+      internalCode: customer.internalCode ?? "",
+      reason: "",
+    });
+  }, [customer.id, reset]);
 
   const onSubmit = async (values: FormValues) => {
     const response = await fetch(`/api/customers/${customer.id}`, {
