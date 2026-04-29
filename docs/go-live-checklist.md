@@ -29,6 +29,7 @@ Environment: Production
 - [ ] No sensitive data in logs (photos, IDs, DATABASE_URL, AUTH_SECRET)
 - [ ] Private routes require auth
 - [ ] Critical APIs return 401/403 as expected
+- [ ] Rate limiting active on sensitive endpoints (`auth`, `check-in`, `check-out`, `force checkout`, `asset upload`)
 
 ## Storage and backups
 - [ ] `STORAGE_DRIVER=s3` in production (not local)

@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { UserRole } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { checkRateLimit } from "@/lib/security/rate-limit";
 import { loginSchema } from "@/modules/auth/schemas";
 
 declare module "next-auth" {
@@ -35,6 +36,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const parsed = loginSchema.safeParse(credentials);
 
         if (!parsed.success) {
+          return null;
+        }
+
+        const loginRateLimit = checkRateLimit({
+          key: `login:${parsed.data.email.toLowerCase()}`,
+          limit: 8,
+          windowMs: 60_000,
+        });
+        if (!loginRateLimit.ok) {
           return null;
         }
 

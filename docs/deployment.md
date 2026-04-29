@@ -21,12 +21,25 @@ Set these in GitHub repository settings > Secrets and variables > Actions:
 - `PROD_S3_ACCESS_KEY_ID`
 - `PROD_S3_SECRET_ACCESS_KEY`
 - `PROD_SENTRY_DSN` (optional but recommended)
+- `PROD_DEPLOY_HOOK_URL` (required for deploy workflow)
+- `PROD_APP_HEALTHCHECK_URL` (optional, e.g. `https://app.example.com/api/health`)
 
 ## 3) Migration Policy
 - Development only: `npm run db:migrate` (`prisma migrate dev`).
 - Production only: `npm run db:migrate:deploy` (`prisma migrate deploy`).
 
 This prevents schema drift and unsafe migration generation in production.
+
+## 3.1) Deploy workflow behavior
+- Workflow file: `.github/workflows/deploy.yml`.
+- Trigger: `workflow_dispatch` on `main`.
+- Steps:
+  1. `npm ci`
+  2. `npm run db:generate`
+  3. `npm run db:migrate:deploy`
+  4. `npm run build`
+  5. Trigger provider deploy via `PROD_DEPLOY_HOOK_URL`
+  6. Optional healthcheck against `PROD_APP_HEALTHCHECK_URL`
 
 ## 4) Storage Persistence
 - `STORAGE_DRIVER=local` is **not valid for production containers** because container filesystems are ephemeral.

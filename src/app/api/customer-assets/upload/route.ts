@@ -2,6 +2,7 @@ import { CustomerAssetType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getRequestId, jsonError, logSensitiveAction } from "@/lib/observability/api";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
 import { uploadCustomerAsset } from "@/modules/customer-assets/service";
 
 export const runtime = "nodejs";
@@ -11,6 +12,19 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user) {
     return jsonError(requestId, "Unauthorized", 401, { action: "CUSTOMER_ASSET_UPLOAD" });
+  }
+
+  const ip = getClientIp(request);
+  const rateLimit = checkRateLimit({
+    key: `asset-upload:${session.user.id}:${ip}`,
+    limit: 15,
+    windowMs: 60_000,
+  });
+  if (!rateLimit.ok) {
+    return jsonError(requestId, "too_many_requests", 429, {
+      action: "CUSTOMER_ASSET_UPLOAD",
+      userId: session.user.id,
+    });
   }
 
   try {
