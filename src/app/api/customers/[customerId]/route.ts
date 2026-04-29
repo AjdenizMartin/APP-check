@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getRequestId, jsonError, logSensitiveAction } from "@/lib/observability/api";
-import { getCustomerDetail, updateCustomer } from "@/modules/customers/service";
+import { deactivateCustomer, getCustomerDetail, updateCustomer } from "@/modules/customers/service";
 
 export const runtime = "nodejs";
 
@@ -52,5 +52,39 @@ export async function PATCH(request: Request, context: { params: Promise<{ custo
       userId: session.user.id,
     });
     return jsonError(requestId, message, 400, { action: "CUSTOMER_UPDATE", userId: session.user.id }, error);
+  }
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ customerId: string }> }) {
+  const requestId = getRequestId(request);
+  const session = await auth();
+  if (!session?.user) {
+    return jsonError(requestId, "Unauthorized", 401, { action: "CUSTOMER_DEACTIVATE" });
+  }
+
+  try {
+    const { customerId } = await context.params;
+    const body = await request.json().catch(() => ({}));
+    const reason = typeof body.reason === "string" ? body.reason : undefined;
+    const customer = await deactivateCustomer(customerId, session.user.id, reason);
+
+    logSensitiveAction({
+      action: "CUSTOMER_DEACTIVATE",
+      requestId,
+      result: "success",
+      userId: session.user.id,
+      customerId,
+    });
+
+    return NextResponse.json({ data: customer, requestId });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "unknown_error";
+    logSensitiveAction({
+      action: "CUSTOMER_DEACTIVATE",
+      requestId,
+      result: "error",
+      userId: session.user.id,
+    });
+    return jsonError(requestId, message, 400, { action: "CUSTOMER_DEACTIVATE", userId: session.user.id }, error);
   }
 }

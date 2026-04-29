@@ -145,3 +145,30 @@ export async function updateCustomer(rawInput: unknown, actorUserId: string, rea
 
   return updated;
 }
+
+export async function deactivateCustomer(customerId: string, actorUserId: string, reason?: string) {
+  const previous = await prisma.customer.findUnique({ where: { id: customerId } });
+  if (!previous || !previous.isActive) {
+    throw new Error("customer_not_found");
+  }
+
+  const updated = await prisma.customer.update({
+    where: { id: customerId },
+    data: {
+      isActive: false,
+      updatedByUserId: actorUserId,
+    },
+  });
+
+  await createAuditLog({
+    actorUserId,
+    entityType: "CUSTOMER",
+    entityId: updated.id,
+    action: "CUSTOMER_DEACTIVATED",
+    reason,
+    beforeJson: previous,
+    afterJson: updated,
+  });
+
+  return updated;
+}

@@ -79,6 +79,27 @@ export function CustomerEditForm({
     router.refresh();
   };
 
+  const onDeactivate = async () => {
+    const confirmed = window.confirm("Are you sure you want to deactivate this customer?");
+    if (!confirmed) return;
+
+    const reason = window.prompt("Optional reason for deactivation (recommended):") ?? "";
+    const response = await fetch(`/api/customers/${customer.id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reason }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.error ?? "Could not deactivate customer");
+      return;
+    }
+
+    router.push("/dashboard/customers");
+    router.refresh();
+  };
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-3 rounded-lg border border-[var(--line)] bg-[var(--surface-elevated)] p-4">
       <h4 className="font-semibold text-[var(--foreground)]">Edit Profile</h4>
@@ -109,6 +130,9 @@ export function CustomerEditForm({
       </div>
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? "Saving..." : "Save changes"}
+      </Button>
+      <Button type="button" variant="destructive" onClick={onDeactivate}>
+        Deactivate customer
       </Button>
     </form>
   );
