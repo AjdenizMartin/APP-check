@@ -1,64 +1,68 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckoutForm } from "@/components/visits/checkout-form";
-import { formatTime } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 
 interface ActiveVisit {
   id: string;
   fullName: string;
   checkInAt: Date;
-  checkInBy: { name: string };
 }
 
 interface ActiveVisitsSearchProps {
   visits: ActiveVisit[];
 }
 
+function matchesInitials(fullName: string, query: string) {
+  const initials = fullName
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0]?.toLowerCase() ?? "")
+    .join("");
+
+  return initials.includes(query);
+}
+
 export function ActiveVisitsSearch({ visits }: ActiveVisitsSearchProps) {
   const [search, setSearch] = useState("");
+  const normalized = search.trim().toLowerCase();
 
-  const filtered = visits.filter(v => 
-    v.fullName.toLowerCase().includes(search.toLowerCase()) ||
-    v.checkInBy.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = useMemo(() => {
+    if (!normalized) return visits;
+
+    return visits.filter((visit) => {
+      const name = visit.fullName.toLowerCase();
+      return name.includes(normalized) || matchesInitials(visit.fullName, normalized);
+    });
+  }, [normalized, visits]);
 
   return (
-    <Card className="mt-4">
-      <CardHeader>
-        <CardTitle className="text-base">Search for Check-out</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Input
-          placeholder="Search by customer name..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="mb-3 w-full"
-        />
-        <div className="space-y-2">
-          {filtered.map((visit) => (
-            <div key={visit.id} className="rounded-lg border border-[var(--line)] bg-[var(--surface-muted)] p-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--foreground)]">{visit.fullName}</p>
-                  <p className="text-sm text-[var(--text-muted)]">Check-in: {formatTime(visit.checkInAt)}</p>
-                </div>
-                <Badge>ACTIVE</Badge>
+    <div className="space-y-3">
+      <Input
+        placeholder="Search active customer by name or initials (e.g. CV)"
+        value={search}
+        onChange={(event) => setSearch(event.target.value)}
+        className="w-full"
+      />
+      <div className="space-y-3">
+        {filtered.map((visit) => (
+          <div key={visit.id} className="rounded-lg border border-[var(--line)] bg-[var(--surface-muted)] p-3">
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-semibold text-[var(--foreground)]">{visit.fullName}</p>
+                <p className="text-sm text-[var(--text-muted)]">Check-in: {formatDateTime(visit.checkInAt)}</p>
               </div>
-              <CheckoutForm visitId={visit.id} />
+              <Badge>ACTIVE</Badge>
             </div>
-          ))}
-          {filtered.length === 0 && search.length >= 2 ? (
-            <p className="text-sm text-[var(--text-muted)]">No active visits found for your search.</p>
-          ) : null}
-          {visits.length === 0 ? (
-            <p className="text-sm text-[var(--text-muted)]">No active visits right now.</p>
-          ) : null}
-        </div>
-      </CardContent>
-    </Card>
+            <CheckoutForm visitId={visit.id} />
+          </div>
+        ))}
+        {filtered.length === 0 ? <p className="text-sm text-[var(--text-muted)]">No active visits found for this search.</p> : null}
+      </div>
+    </div>
   );
 }

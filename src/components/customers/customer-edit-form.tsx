@@ -61,7 +61,7 @@ export function CustomerEditForm({
       internalCode: customer.internalCode ?? "",
       reason: "",
     });
-  }, [customer.id, reset]);
+  }, [customer.id, customer.fullName, customer.phone, customer.address, customer.notes, customer.internalCode, reset]);
 
   const onSubmit = async (values: FormValues) => {
     const response = await fetch(`/api/customers/${customer.id}`, {

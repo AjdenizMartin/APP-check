@@ -2,6 +2,7 @@ import { VisitStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { FinancialCorrectionForm } from "@/components/financials/financial-correction-form";
+import { DateInputWithPicker } from "@/components/shared/date-input-with-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { canCorrectFinancial } from "@/lib/permissions/roles";
@@ -32,8 +33,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Sear
       <CardHeader>
         <CardTitle>Daily History</CardTitle>
         <form className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-4" method="get">
-          <input
-            type="date"
+          <DateInputWithPicker
             name="date"
             defaultValue={date ?? new Date().toISOString().slice(0, 10)}
             className="h-10 rounded-md border border-[var(--line)] bg-[var(--surface-muted)] px-3 text-sm text-[var(--foreground)]"

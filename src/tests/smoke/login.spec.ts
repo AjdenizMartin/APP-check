@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { loginAsAdmin } from "./fixtures/auth";
 
-test("login page renders", async ({ page }) => {
-  await page.goto("/login");
-  await expect(page.getByText("App+ | Acceso")).toBeVisible();
+test("login correcto", async ({ page }) => {
+  await loginAsAdmin(page);
+  await expect(page.getByText("Reception Shortcuts")).toBeVisible();
 });

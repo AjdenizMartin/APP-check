@@ -1,14 +1,16 @@
 import { CustomerAssetType } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getRequestId, jsonError, logSensitiveAction } from "@/lib/observability/api";
 import { uploadCustomerAsset } from "@/modules/customer-assets/service";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
+  const requestId = getRequestId(request);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError(requestId, "Unauthorized", 401, { action: "CUSTOMER_ASSET_UPLOAD" });
   }
 
   try {
@@ -18,11 +20,11 @@ export async function POST(request: Request) {
     const file = formData.get("file");
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: "file_required" }, { status: 400 });
+      return jsonError(requestId, "file_required", 400, { action: "CUSTOMER_ASSET_UPLOAD", userId: session.user.id, customerId });
     }
 
     if (!Object.values(CustomerAssetType).includes(assetType as CustomerAssetType)) {
-      return NextResponse.json({ error: "invalid_asset_type" }, { status: 400 });
+      return jsonError(requestId, "invalid_asset_type", 400, { action: "CUSTOMER_ASSET_UPLOAD", userId: session.user.id, customerId });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
@@ -36,9 +38,24 @@ export async function POST(request: Request) {
       uploadedByUserId: session.user.id,
     });
 
-    return NextResponse.json({ data: asset }, { status: 201 });
+    logSensitiveAction({
+      action: "CUSTOMER_ASSET_UPLOAD",
+      requestId,
+      result: "success",
+      userId: session.user.id,
+      customerId,
+      details: { assetId: asset.id, assetType: asset.assetType },
+    });
+
+    return NextResponse.json({ data: asset, requestId }, { status: 201 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown_error";
-    return NextResponse.json({ error: message }, { status: 400 });
+    logSensitiveAction({
+      action: "CUSTOMER_ASSET_UPLOAD",
+      requestId,
+      result: "error",
+      userId: session.user.id,
+    });
+    return jsonError(requestId, message, 400, { action: "CUSTOMER_ASSET_UPLOAD", userId: session.user.id }, error);
   }
 }

@@ -1,0 +1,54 @@
+name: Deploy Production
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prisma generate
+        run: npm run db:generate
+
+      - name: Prisma migrate deploy (production-safe)
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+        run: npm run db:migrate:deploy
+
+      - name: Build
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL }}
+          AUTH_SECRET: ${{ secrets.PROD_AUTH_SECRET }}
+          STORAGE_DRIVER: ${{ secrets.PROD_STORAGE_DRIVER }}
+          S3_BUCKET: ${{ secrets.PROD_S3_BUCKET }}
+          S3_REGION: ${{ secrets.PROD_S3_REGION }}
+          S3_ENDPOINT: ${{ secrets.PROD_S3_ENDPOINT }}
+          S3_ACCESS_KEY_ID: ${{ secrets.PROD_S3_ACCESS_KEY_ID }}
+          S3_SECRET_ACCESS_KEY: ${{ secrets.PROD_S3_SECRET_ACCESS_KEY }}
+          SENTRY_DSN: ${{ secrets.PROD_SENTRY_DSN }}
+        run: npm run build
+
+      - name: Deploy application (template)
+        run: |
+          echo "Configure your deploy provider here (e.g. ECS, Render, Fly, Railway, Kubernetes)."
+          echo "This template intentionally avoids provider-specific assumptions."

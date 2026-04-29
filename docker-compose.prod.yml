@@ -1,89 +1,73 @@
 services:
   postgres_athlone:
     image: postgres:16
-    container_name: casino-athlone-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: appplus_athlone
-    ports:
-      - "5433:5432"
+      POSTGRES_USER: ${ATHLONE_DB_USER}
+      POSTGRES_PASSWORD: ${ATHLONE_DB_PASSWORD}
+      POSTGRES_DB: ${ATHLONE_DB_NAME}
     volumes:
       - appplus_athlone_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d appplus_athlone"]
+      test: ["CMD-SHELL", "pg_isready -U ${ATHLONE_DB_USER} -d ${ATHLONE_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   app_athlone:
-    image: node:22-alpine
-    container_name: casino-athlone-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    working_dir: /app
-    command: sh -c "npm ci && npm run db:generate && npm run db:migrate && npm run db:seed && npm run dev -- --hostname 0.0.0.0 --port 3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_athlone:5432/appplus_athlone
-      AUTH_SECRET: athlone-super-secret-change-me
+      DATABASE_URL: ${ATHLONE_DATABASE_URL}
+      AUTH_SECRET: ${ATHLONE_AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
-      AUTH_URL: http://localhost:3001
-      NODE_ENV: development
-      SEED_DEFAULT_PASSWORD: Change123!
-      STORAGE_DRIVER: local
-      PRIVATE_STORAGE_PATH: .data/storage
-      DEFAULT_CURRENCY: EUR
+      AUTH_URL: ${ATHLONE_AUTH_URL}
+      NODE_ENV: production
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      PRIVATE_STORAGE_PATH: ${PRIVATE_STORAGE_PATH:-.data/storage}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     ports:
-      - "3001:3000"
+      - "3101:3000"
     depends_on:
       postgres_athlone:
         condition: service_healthy
-    volumes:
-      - ./:/app
-      - appplus_athlone_node_modules:/app/node_modules
 
   postgres_mullingar:
     image: postgres:16
-    container_name: casino-mullingar-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: appplus_mullingar
-    ports:
-      - "5434:5432"
+      POSTGRES_USER: ${MULLINGAR_DB_USER}
+      POSTGRES_PASSWORD: ${MULLINGAR_DB_PASSWORD}
+      POSTGRES_DB: ${MULLINGAR_DB_NAME}
     volumes:
       - appplus_mullingar_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d appplus_mullingar"]
+      test: ["CMD-SHELL", "pg_isready -U ${MULLINGAR_DB_USER} -d ${MULLINGAR_DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 10
 
   app_mullingar:
-    image: node:22-alpine
-    container_name: casino-mullingar-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
-    working_dir: /app
-    command: sh -c "npm ci && npm run db:generate && npm run db:migrate && npm run db:seed && npm run dev -- --hostname 0.0.0.0 --port 3000"
     environment:
-      DATABASE_URL: postgresql://postgres:postgres@postgres_mullingar:5432/appplus_mullingar
-      AUTH_SECRET: mullingar-super-secret-change-me
+      DATABASE_URL: ${MULLINGAR_DATABASE_URL}
+      AUTH_SECRET: ${MULLINGAR_AUTH_SECRET}
       AUTH_TRUST_HOST: "true"
-      AUTH_URL: http://localhost:3002
-      NODE_ENV: development
-      SEED_DEFAULT_PASSWORD: Change123!
-      STORAGE_DRIVER: local
-      PRIVATE_STORAGE_PATH: .data/storage
-      DEFAULT_CURRENCY: EUR
+      AUTH_URL: ${MULLINGAR_AUTH_URL}
+      NODE_ENV: production
+      STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
+      PRIVATE_STORAGE_PATH: ${PRIVATE_STORAGE_PATH:-.data/storage}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     ports:
-      - "3002:3000"
+      - "3102:3000"
     depends_on:
       postgres_mullingar:
         condition: service_healthy
-    volumes:
-      - ./:/app
-      - appplus_mullingar_node_modules:/app/node_modules
 
   backup_athlone:
     build:
@@ -149,5 +133,3 @@ services:
 volumes:
   appplus_athlone_pgdata:
   appplus_mullingar_pgdata:
-  appplus_athlone_node_modules:
-  appplus_mullingar_node_modules:

@@ -1,38 +1,56 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getRequestId, jsonError, logSensitiveAction } from "@/lib/observability/api";
 import { getCustomerDetail, updateCustomer } from "@/modules/customers/service";
 
 export const runtime = "nodejs";
 
-export async function GET(_: Request, context: { params: Promise<{ customerId: string }> }) {
+export async function GET(request: Request, context: { params: Promise<{ customerId: string }> }) {
+  const requestId = getRequestId(request);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError(requestId, "Unauthorized", 401, { action: "CUSTOMER_GET" });
   }
 
   const { customerId } = await context.params;
   const customer = await getCustomerDetail(customerId);
 
   if (!customer) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return jsonError(requestId, "Not found", 404, { action: "CUSTOMER_GET", userId: session.user.id, customerId });
   }
 
-  return NextResponse.json({ data: customer });
+  return NextResponse.json({ data: customer, requestId });
 }
 
 export async function PATCH(request: Request, context: { params: Promise<{ customerId: string }> }) {
+  const requestId = getRequestId(request);
   const session = await auth();
   if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return jsonError(requestId, "Unauthorized", 401, { action: "CUSTOMER_UPDATE" });
   }
 
   try {
     const { customerId } = await context.params;
     const body = await request.json();
     const customer = await updateCustomer({ ...body, id: customerId }, session.user.id, body.reason);
-    return NextResponse.json({ data: customer });
+
+    logSensitiveAction({
+      action: "CUSTOMER_UPDATE",
+      requestId,
+      result: "success",
+      userId: session.user.id,
+      customerId,
+    });
+
+    return NextResponse.json({ data: customer, requestId });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown_error";
-    return NextResponse.json({ error: message }, { status: 400 });
+    logSensitiveAction({
+      action: "CUSTOMER_UPDATE",
+      requestId,
+      result: "error",
+      userId: session.user.id,
+    });
+    return jsonError(requestId, message, 400, { action: "CUSTOMER_UPDATE", userId: session.user.id }, error);
   }
 }
