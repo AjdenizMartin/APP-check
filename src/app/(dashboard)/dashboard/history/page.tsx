@@ -1,11 +1,9 @@
 import { VisitStatus } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { FinancialCorrectionForm } from "@/components/financials/financial-correction-form";
 import { DateInputWithPicker } from "@/components/shared/date-input-with-picker";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatCurrency, formatDateTime } from "@/lib/format";
-import { canCorrectFinancial } from "@/lib/permissions/roles";
 import { getVisitHistory } from "@/modules/visits/service";
 
 type SearchParams = Promise<{ date?: string; status?: VisitStatus; customer?: string; employeeId?: string }>;
@@ -25,8 +23,6 @@ export default async function HistoryPage({ searchParams }: { searchParams: Sear
     customerQuery: customer,
     employeeId,
   });
-
-  const allowFinancialCorrection = canCorrectFinancial(session.user.role);
 
   return (
     <Card>
@@ -75,22 +71,10 @@ export default async function HistoryPage({ searchParams }: { searchParams: Sear
                   <td className="p-2">{visit.status}</td>
                   <td className="p-2">
                     {visit.financial ? (
-                      <>
-                        <div className="text-xs">
-                          {visit.financial.resultType} {formatCurrency(Number(visit.financial.amount), visit.financial.currency)}
-                          {visit.financial.status === "CORRECTED" ? " (CORRECTED)" : ""}
-                        </div>
-                        {allowFinancialCorrection ? (
-                          <FinancialCorrectionForm
-                            visitId={visit.id}
-                            defaults={{
-                              resultType: visit.financial.resultType,
-                              amount: Number(visit.financial.amount),
-                              currency: visit.financial.currency,
-                            }}
-                          />
-                        ) : null}
-                      </>
+                      <div className="inline-flex items-center rounded-full border border-[var(--line)] bg-[var(--surface-muted)] px-2.5 py-1 text-xs font-medium">
+                        {visit.financial.resultType} {formatCurrency(Number(visit.financial.amount), visit.financial.currency)}
+                        {visit.financial.status === "CORRECTED" ? " (CORRECTED)" : ""}
+                      </div>
                     ) : (
                       "-"
                     )}

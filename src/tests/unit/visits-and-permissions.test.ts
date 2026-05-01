@@ -57,10 +57,11 @@ describe("Visits and permissions rules", () => {
 
     const { checkOutVisit } = await import("@/modules/visits/service");
 
-    const result = await checkOutVisit({ visitId: "v1", resultType: VisitResultType.WIN, amount: 10, currency: "EUR" }, "u1");
+    const result = await checkOutVisit({ visitId: "v1", amountIn: 25, amountOut: 15, currency: "EUR" }, "u1");
 
     expect(result.visit.status).toBe(VisitStatus.CHECKED_OUT);
     expect(createFinancial).toHaveBeenCalledTimes(1);
+    expect(createFinancial.mock.calls[0][0].data.resultType).toBe(VisitResultType.LOSS);
   });
 
   it("force checkout cierra todas las visitas activas", async () => {

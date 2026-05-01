@@ -1,5 +1,6 @@
 import { Prisma, UserRole, VisitFinancialStatus, VisitResultType, VisitStatus } from "@prisma/client";
 import { prisma } from "@/lib/db/prisma";
+import { calculateVisitNet, mapNetToFinancial, parseNonNegativeAmount } from "@/lib/financials/visit-result";
 import { canCorrectFinancial, canForceCheckout } from "@/lib/permissions/roles";
 import { createAuditLog } from "@/modules/audit/service";
 import { checkInSchema, checkOutSchema, forceCheckoutSchema } from "@/modules/visits/schemas";
@@ -38,6 +39,10 @@ export async function checkInCustomer(rawInput: unknown, actorUserId: string) {
 
 export async function checkOutVisit(rawInput: unknown, actorUserId: string) {
   const parsed = checkOutSchema.parse(rawInput);
+  const financialInput =
+    "amountIn" in parsed && "amountOut" in parsed
+      ? mapNetToFinancial(calculateVisitNet(parseNonNegativeAmount(parsed.amountIn), parseNonNegativeAmount(parsed.amountOut)))
+      : { resultType: parsed.resultType, amount: parsed.amount };
 
   return prisma.$transaction(async (tx) => {
     const visit = await tx.visit.findUnique({
@@ -65,8 +70,8 @@ export async function checkOutVisit(rawInput: unknown, actorUserId: string) {
     const financial = await tx.visitFinancial.create({
       data: {
         visitId: visit.id,
-        resultType: parsed.resultType,
-        amount: new Prisma.Decimal(parsed.amount),
+        resultType: financialInput.resultType,
+        amount: new Prisma.Decimal(financialInput.amount),
         currency: parsed.currency,
         status: VisitFinancialStatus.RECORDED,
         recordedByUserId: actorUserId,
@@ -99,6 +104,9 @@ export async function correctVisitFinancial(input: {
   }
   if (!input.reason?.trim()) {
     throw new Error("correction_reason_required");
+  }
+  if (!Number.isFinite(input.amount) || input.amount < 0) {
+    throw new Error("invalid_amount");
   }
   if (input.resultType === VisitResultType.EVEN && input.amount !== 0) {
     throw new Error("even_amount_must_be_zero");

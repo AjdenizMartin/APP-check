@@ -40,8 +40,8 @@ test("check-out de cliente activo", async ({ page }) => {
     method: "POST",
     body: JSON.stringify({
       visitId: active!.id,
-      resultType: "WIN",
-      amount: 15,
+      amountIn: 15,
+      amountOut: 0,
       currency: "EUR",
     }),
   });

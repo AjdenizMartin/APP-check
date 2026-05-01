@@ -1,19 +1,17 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { VisitResultType } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { calculateVisitNet, formatSignedResult } from "@/lib/financials/visit-result";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const resultTypeSchema = z.union([z.literal(VisitResultType.WIN), z.literal(VisitResultType.LOSS)]);
-
 const schema = z.object({
-  resultType: resultTypeSchema,
-  amount: z.number().min(0),
+  amountIn: z.number().min(0, "Amount In cannot be negative"),
+  amountOut: z.number().min(0, "Amount Out cannot be negative"),
   currency: z.string().length(3),
 });
 
@@ -24,11 +22,16 @@ export function CheckoutForm({ visitId }: { visitId: string }) {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { resultType: VisitResultType.WIN, amount: 0, currency: "EUR" },
+    defaultValues: { amountIn: 0, amountOut: 0, currency: "EUR" },
   });
+
+  const amountIn = watch("amountIn") ?? 0;
+  const amountOut = watch("amountOut") ?? 0;
+  const netResult = calculateVisitNet(amountIn, amountOut);
 
   const onSubmit = async (values: FormValues) => {
     const response = await fetch("/api/visits/checkout", {
@@ -47,17 +50,34 @@ export function CheckoutForm({ visitId }: { visitId: string }) {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(130px,160px)_minmax(170px,1fr)_110px_auto] sm:items-end">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid w-full grid-cols-1 gap-2 sm:grid-cols-[minmax(150px,1fr)_minmax(150px,1fr)_minmax(120px,140px)_110px_auto] sm:items-end">
       <div className="space-y-1 min-w-0">
-        <Label className="block">Result</Label>
-        <select className="h-9 w-full rounded-md border border-[var(--line)] bg-[var(--surface-muted)] px-2 text-sm text-[var(--foreground)]" {...register("resultType")}>
-          <option value={VisitResultType.WIN}>WIN</option>
-          <option value={VisitResultType.LOSS}>LOSS</option>
-        </select>
+        <Label className="block">Amount In</Label>
+        <Input
+          type="number"
+          step="0.01"
+          min={0}
+          className="h-9"
+          {...register("amountIn", {
+            setValueAs: (value) => (value === "" || value == null ? 0 : Number(value)),
+          })}
+        />
       </div>
       <div className="space-y-1 min-w-0">
-        <Label className="block">Amount</Label>
-        <Input type="number" step="0.01" className="h-9" {...register("amount", { valueAsNumber: true })} />
+        <Label className="block">Amount Out</Label>
+        <Input
+          type="number"
+          step="0.01"
+          min={0}
+          className="h-9"
+          {...register("amountOut", {
+            setValueAs: (value) => (value === "" || value == null ? 0 : Number(value)),
+          })}
+        />
+      </div>
+      <div className="space-y-1 min-w-0">
+        <Label className="block">Result</Label>
+        <Input value={formatSignedResult(netResult)} readOnly className="h-9" />
       </div>
       <div className="space-y-1 min-w-0">
         <Label className="block">Currency</Label>
@@ -66,7 +86,8 @@ export function CheckoutForm({ visitId }: { visitId: string }) {
       <Button type="submit" size="sm" disabled={isSubmitting} className="h-9 sm:self-end">
         {isSubmitting ? "Closing..." : "Check out"}
       </Button>
-      {errors.amount ? <p className="text-xs text-[#f0958c] sm:col-span-4">{errors.amount.message}</p> : null}
+      {errors.amountIn ? <p className="text-xs text-[#f0958c] sm:col-span-5">{errors.amountIn.message}</p> : null}
+      {errors.amountOut ? <p className="text-xs text-[#f0958c] sm:col-span-5">{errors.amountOut.message}</p> : null}
     </form>
   );
 }

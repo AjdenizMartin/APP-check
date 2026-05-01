@@ -1,21 +1,25 @@
 import { NextResponse } from "next/server";
 import { requireAnyRole } from "@/lib/auth/authorize";
-import { UserRole, VisitResultType } from "@prisma/client";
+import { UserRole } from "@prisma/client";
+import { mapNetToFinancial } from "@/lib/financials/visit-result";
 import { correctVisitFinancial } from "@/modules/visits/service";
+import { correctFinancialSchema } from "@/modules/visits/schemas";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
     const actor = await requireAnyRole([UserRole.ADMIN, UserRole.SUPERVISOR]);
-    const body = await request.json();
+    const body = correctFinancialSchema.parse(await request.json());
+    const financialInput =
+      "net" in body ? mapNetToFinancial(body.net) : { resultType: body.resultType, amount: body.amount };
 
     const result = await correctVisitFinancial({
-      visitId: String(body.visitId),
-      resultType: body.resultType as VisitResultType,
-      amount: Number(body.amount),
-      currency: String(body.currency ?? "EUR"),
-      reason: String(body.reason ?? ""),
+      visitId: body.visitId,
+      resultType: financialInput.resultType,
+      amount: financialInput.amount,
+      currency: body.currency,
+      reason: body.reason,
       actorUserId: actor.id,
       actorRole: actor.role,
     });
