@@ -31,7 +31,7 @@ export function AppShell({
       <header className="sticky top-0 z-40 border-b border-[var(--line)] bg-[rgba(9,20,16,0.94)] shadow-[0_12px_32px_-26px_rgba(0,0,0,0.9)]">
         <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 p-4">
           <div>
-            <p className="text-xl font-semibold tracking-tight text-[var(--foreground)]">App+</p>
+            <p className="text-xl font-semibold tracking-tight text-[var(--foreground)]">LuxeLedger</p>
             <p className="text-xs text-[var(--text-muted)]">Casino Reception Operations</p>
           </div>
           <nav className="flex flex-wrap items-center gap-2">

@@ -1,4 +1,4 @@
-# App+ Technical Decisions (FASE 0)
+# LuxeLedger Technical Decisions (FASE 0)
 
 Date: 2026-04-23
 

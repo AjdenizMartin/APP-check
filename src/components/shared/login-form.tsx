@@ -15,7 +15,7 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-md border-[var(--line)] bg-[var(--surface-elevated)] shadow-xl shadow-[0_22px_40px_-28px_rgba(0,0,0,0.85)]">
       <CardHeader>
-        <CardTitle className="text-xl">App+ Reception Console</CardTitle>
+        <CardTitle className="text-xl">LuxeLedger Reception Console</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={action} className="space-y-4">

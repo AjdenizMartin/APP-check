@@ -1,4 +1,4 @@
-# App+ (Casino Reception Operations)
+# LuxeLedger (Casino Reception Operations)
 
 MVP application for small casino reception operations: customer check-in/check-out, customer management, private photos, daily history, and audit trails.
 
